@@ -82,7 +82,7 @@ export const FEATURES: Feature[] = [
     title: "Аналитика ниш",
     short: "Поиск прибыльных товаров и оценка конкурентов.",
     icon: Sparkles,
-    status: "soon",
+    status: "ready-ui",
   },
   {
     slug: "handbook",

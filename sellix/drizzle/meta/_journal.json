@@ -15,6 +15,13 @@
       "when": 1782315386501,
       "tag": "0001_magenta_hellfire_club",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782316404502,
+      "tag": "0002_tired_lake",
+      "breakpoints": true
     }
   ]
 }

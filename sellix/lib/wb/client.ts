@@ -10,6 +10,7 @@ export const WB_HOSTS = {
   statistics: "https://statistics-api.wildberries.ru",
   analytics: "https://seller-analytics-api.wildberries.ru",
   feedbacks: "https://feedbacks-api.wildberries.ru",
+  advert: "https://advert-api.wildberries.ru",
   common: "https://common-api.wildberries.ru",
 };
 
@@ -134,6 +135,61 @@ export class WBClient {
     await wbFetch("feedbacks", "/api/v1/feedbacks/answer", this.token, {
       method: "POST",
       body: JSON.stringify({ id: feedbackId, text }),
+    });
+  }
+
+  // ─── Реклама (Promotion API) ─────────────────────────────────
+  /** Список ID кампаний по статусам/типам. */
+  async getAdvertIds(): Promise<number[]> {
+    const data = await wbFetch<any>("advert", "/adv/v1/promotion/count", this.token);
+    const ids: number[] = [];
+    for (const group of data?.adverts ?? []) {
+      for (const a of group?.advert_list ?? []) {
+        if (a?.advertId) ids.push(a.advertId);
+      }
+    }
+    return ids;
+  }
+
+  /** Детали кампаний по ID (название, тип, статус, текущий CPM). */
+  async getAdvertsInfo(ids: number[]): Promise<any[]> {
+    if (ids.length === 0) return [];
+    const data = await wbFetch<any>("advert", "/adv/v1/adverts", this.token, {
+      method: "POST",
+      body: JSON.stringify(ids.slice(0, 50)),
+    });
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Статистика кампаний за период (показы, клики, расход, заказы, выручка). */
+  async getAdvertStats(ids: number[], from: string, to: string): Promise<any[]> {
+    if (ids.length === 0) return [];
+    const data = await wbFetch<any>("advert", "/adv/v2/fullstats", this.token, {
+      method: "POST",
+      body: JSON.stringify(ids.slice(0, 50).map((id) => ({ id, dates: [from, to] }))),
+    });
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Изменить ставку (CPM) кампании. */
+  async setAdvertCpm(advertId: number, type: number, cpm: number, param?: number): Promise<void> {
+    await wbFetch("advert", "/adv/v1/cpm", this.token, {
+      method: "POST",
+      body: JSON.stringify({ advertId, type, cpm, ...(param != null ? { param } : {}) }),
+    });
+  }
+
+  // ─── Контент (SEO карточки) ──────────────────────────────────
+  /** Обновить тексты карточки (best-effort: WB требует полный объект карточки). */
+  async updateCardText(nmId: number, title: string, description: string): Promise<void> {
+    const cards = await this.getCards(100);
+    const card = cards.find((c: any) => (c.nmID ?? c.nmId) === nmId);
+    if (!card) throw new Error("Карточка не найдена для обновления");
+    card.title = title;
+    card.description = description;
+    await wbFetch("content", "/content/v2/cards/update", this.token, {
+      method: "POST",
+      body: JSON.stringify([card]),
     });
   }
 }

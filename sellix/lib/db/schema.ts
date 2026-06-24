@@ -174,9 +174,39 @@ export const handbookDocs = pgTable("handbook_docs", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// ─── Реклама (биддер) ───────────────────────────────────────────
+export const adCampaigns = pgTable("ad_campaigns", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+  advertId: integer("advert_id").notNull(),
+  name: text("name"),
+  type: integer("type"),
+  status: integer("status"),
+  cpm: integer("cpm"), // текущая ставка
+  views: integer("views").notNull().default(0),
+  clicks: integer("clicks").notNull().default(0),
+  orders: integer("orders").notNull().default(0),
+  spend: integer("spend").notNull().default(0), // рубли
+  revenue: integer("revenue").notNull().default(0), // рубли
+  drr: real("drr"), // доля рекламных расходов, %
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const adSettings = pgTable("ad_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().unique().references(() => stores.id, { onDelete: "cascade" }),
+  targetDrr: integer("target_drr").notNull().default(10), // целевой ДРР, %
+  maxCpm: integer("max_cpm").notNull().default(500),
+  minCpm: integer("min_cpm").notNull().default(100),
+  auto: boolean("auto").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Store = typeof stores.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Feedback = typeof feedbacks.$inferSelect;
 export type HandbookDoc = typeof handbookDocs.$inferSelect;
+export type AdCampaign = typeof adCampaigns.$inferSelect;
+export type AdSettings = typeof adSettings.$inferSelect;

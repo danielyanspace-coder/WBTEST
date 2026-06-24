@@ -12,6 +12,7 @@ import {
   CreditCard,
   Settings,
   PlugZap,
+  Sparkles,
 } from "@/components/ui/icons";
 
 export type NavItem = {
@@ -34,6 +35,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { href: "/dashboard/supplies", label: "Поставки", icon: Boxes, group: "tools" },
   { href: "/dashboard/ads", label: "Реклама", icon: Megaphone, group: "tools" },
   { href: "/dashboard/seo", label: "SEO карточек", icon: Search, group: "tools" },
+  { href: "/dashboard/niches", label: "Аналитика ниш", icon: Sparkles, group: "tools" },
   { href: "/dashboard/handbook", label: "Справочник + чат", icon: BookOpen, group: "tools" },
 
   { href: "/dashboard/referral", label: "Рефералы", icon: Gift, group: "account" },

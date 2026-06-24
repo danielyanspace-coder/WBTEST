@@ -13,8 +13,11 @@ import {
   subscriptions,
   referralEarnings,
   users,
+  adCampaigns,
+  adSettings,
 } from "@/lib/db/schema";
 import { getStoreForUser } from "@/lib/wb/store";
+import { recommendCpm } from "@/lib/ads/bidder";
 
 const RUB = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
@@ -146,6 +149,24 @@ export async function getReferral(userId: string) {
     available: sum("AVAILABLE"),
     total: earnings.reduce((a, e) => a + e.amount, 0),
   };
+}
+
+export async function getAds(userId: string) {
+  const store = await getStoreForUser(userId);
+  const defaults = { targetDrr: 10, minCpm: 100, maxCpm: 500, auto: false };
+  if (!store) return { connected: false, settings: defaults, campaigns: [] as any[] };
+
+  const setRows = await db.select().from(adSettings).where(eq(adSettings.storeId, store.id)).limit(1);
+  const s = setRows[0]
+    ? { targetDrr: setRows[0].targetDrr, minCpm: setRows[0].minCpm, maxCpm: setRows[0].maxCpm, auto: setRows[0].auto }
+    : defaults;
+
+  const camps = await db.select().from(adCampaigns).where(eq(adCampaigns.storeId, store.id));
+  const campaigns = camps.map((c) => ({
+    ...c,
+    rec: recommendCpm({ cpm: c.cpm, drr: c.drr, orders: c.orders }, s),
+  }));
+  return { connected: true, settings: s, campaigns };
 }
 
 export async function getSubscription(userId: string) {

@@ -5,7 +5,7 @@
  */
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { stores, products, stocks, salesDaily, feedbacks } from "@/lib/db/schema";
+import { stores, products, stocks, salesDaily, feedbacks, adCampaigns } from "@/lib/db/schema";
 import { WBClient } from "./client";
 
 function dateNDaysAgo(n: number) {
@@ -120,6 +120,50 @@ export async function syncFeedbacks(storeId: string, client: WBClient) {
   return toInsert.length;
 }
 
+export async function syncAds(storeId: string, client: WBClient) {
+  const ids = await client.getAdvertIds();
+  if (ids.length === 0) {
+    await db.delete(adCampaigns).where(eq(adCampaigns.storeId, storeId));
+    return 0;
+  }
+  const from = dateNDaysAgo(7);
+  const to = dateNDaysAgo(0);
+  const [info, stats] = await Promise.all([
+    client.getAdvertsInfo(ids).catch(() => []),
+    client.getAdvertStats(ids, from, to).catch(() => []),
+  ]);
+
+  const infoById = new Map<number, any>();
+  for (const a of info) infoById.set(a.advertId ?? a.id, a);
+  const statById = new Map<number, any>();
+  for (const s of stats) statById.set(s.advertId ?? s.id, s);
+
+  await db.delete(adCampaigns).where(eq(adCampaigns.storeId, storeId));
+  const rows = ids.map((advertId) => {
+    const inf = infoById.get(advertId) ?? {};
+    const st = statById.get(advertId) ?? {};
+    const spend = Math.round(st.sum ?? 0);
+    const revenue = Math.round(st.sum_price ?? st.sumPrice ?? 0);
+    const drr = revenue > 0 ? (spend / revenue) * 100 : null;
+    return {
+      storeId,
+      advertId,
+      name: inf.name ?? `Кампания ${advertId}`,
+      type: inf.type ?? null,
+      status: inf.status ?? null,
+      cpm: inf.params?.[0]?.cpm ?? inf.cpm ?? null,
+      views: st.views ?? 0,
+      clicks: st.clicks ?? 0,
+      orders: st.orders ?? 0,
+      spend,
+      revenue,
+      drr,
+    };
+  });
+  if (rows.length) await db.insert(adCampaigns).values(rows);
+  return rows.length;
+}
+
 /** Полная синхронизация. Возвращает счётчики и ошибки по секциям. */
 export async function syncAll(storeId: string, client: WBClient) {
   const result: Record<string, number | string> = {};
@@ -128,6 +172,7 @@ export async function syncAll(storeId: string, client: WBClient) {
     ["stocks", syncStocks],
     ["sales", syncSales],
     ["feedbacks", syncFeedbacks],
+    ["ads", syncAds],
   ] as const) {
     try {
       result[name] = await fn(storeId, client);
