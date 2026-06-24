@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Bell, ChevronDown } from "@/components/ui/icons";
 import { getCurrentUser } from "@/lib/auth/session";
 import { logoutAction } from "@/app/actions/auth";
+import { MobileNav } from "@/components/dashboard/MobileNav";
 
 export async function Topbar({ title }: { title: string }) {
   const user = await getCurrentUser();
@@ -10,7 +11,10 @@ export async function Topbar({ title }: { title: string }) {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-line bg-ink/70 px-5 backdrop-blur-xl">
-      <h1 className="font-display text-lg font-bold">{title}</h1>
+      <div className="flex items-center gap-3">
+        <MobileNav />
+        <h1 className="font-display text-lg font-bold">{title}</h1>
+      </div>
       <div className="flex items-center gap-3">
         <button className="grid h-9 w-9 place-items-center rounded-xl border border-line text-muted hover:text-white">
           <Bell className="h-4 w-4" />

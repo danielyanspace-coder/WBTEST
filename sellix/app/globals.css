@@ -21,6 +21,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Премиальный фон: мягкие неоновые свечения + лёгкий грейн */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(55vw 55vw at 85% -10%, rgba(199, 245, 3, 0.08), transparent 60%),
+    radial-gradient(45vw 45vw at -10% 110%, rgba(120, 160, 255, 0.05), transparent 60%);
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 /* Тонкая сетка-фон в духе bento-дашбордов */
 .bg-dots {
   background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
@@ -30,20 +51,35 @@ body {
 @layer components {
   /* Базовая bento-карточка: скруглённый блок с лёгким градиентом и тонкой рамкой */
   .bento {
-    @apply relative overflow-hidden rounded-bento border border-line bg-ink-700 shadow-bento;
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+    @apply relative overflow-hidden rounded-bento border bg-ink-700 shadow-bento;
+    border-color: rgba(255, 255, 255, 0.07);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01));
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.35s, box-shadow 0.35s;
+  }
+  .bento:hover {
+    transform: translateY(-3px);
+    border-color: rgba(199, 245, 3, 0.25);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset, 0 30px 70px -28px rgba(0, 0, 0, 0.9),
+      0 0 40px -22px rgba(199, 245, 3, 0.5);
   }
 
   .bento-lime {
     @apply relative overflow-hidden rounded-bento text-ink;
-    background: linear-gradient(135deg, #d4ff1a 0%, #c7f503 60%, #aee000 100%);
+    background: linear-gradient(135deg, #e2ff5c 0%, #c7f503 55%, #a6dc00 100%);
+    box-shadow: 0 24px 60px -24px rgba(199, 245, 3, 0.4);
   }
 
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition active:scale-[0.98];
   }
   .btn-primary {
-    @apply btn bg-lime text-ink hover:bg-lime-bright;
+    @apply btn text-ink;
+    background: linear-gradient(180deg, #d4ff1a, #c7f503);
+    box-shadow: 0 8px 24px -8px rgba(199, 245, 3, 0.55);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.04);
+    box-shadow: 0 12px 30px -8px rgba(199, 245, 3, 0.75);
   }
   .btn-ghost {
     @apply btn border border-line text-white hover:bg-ink-600;
@@ -61,4 +97,48 @@ body {
   .term {
     @apply cursor-help border-b border-dashed border-lime/60 text-white;
   }
+
+  /* Премиальный градиентный текст для крупных заголовков */
+  .grad {
+    background: linear-gradient(180deg, #fff 30%, #b9b9c0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 }
+
+/* Плавное появление контента страницы */
+@keyframes viewIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-view {
+  animation: viewIn 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Каскадное появление плиток */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.stagger > * {
+  animation: popIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.stagger > *:nth-child(2) { animation-delay: 0.05s; }
+.stagger > *:nth-child(3) { animation-delay: 0.1s; }
+.stagger > *:nth-child(4) { animation-delay: 0.15s; }
+.stagger > *:nth-child(5) { animation-delay: 0.2s; }
+.stagger > *:nth-child(6) { animation-delay: 0.25s; }
+.stagger > *:nth-child(7) { animation-delay: 0.3s; }

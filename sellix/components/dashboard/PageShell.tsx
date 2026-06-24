@@ -11,7 +11,7 @@ export function PageShell({
   return (
     <div className="flex min-h-screen flex-1 flex-col">
       <Topbar title={title} />
-      <div className="flex-1 p-5">{children}</div>
+      <div className="animate-view flex-1 p-5">{children}</div>
     </div>
   );
 }
