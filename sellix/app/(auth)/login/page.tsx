@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { AuthShell, Field } from "@/components/auth/AuthShell";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { LoginForm } from "@/components/auth/AuthForms";
 
 export default function LoginPage() {
   return (
@@ -15,15 +16,7 @@ export default function LoginPage() {
         </>
       }
     >
-      {/* TODO(auth): подключить серверное действие входа (next-auth/credentials) */}
-      <form action="/dashboard">
-        <Field label="Email" type="email" placeholder="you@example.com" />
-        <Field label="Пароль" type="password" placeholder="••••••••" />
-        <Link href="#" className="mb-4 block text-right text-xs text-muted hover:text-white">
-          Забыли пароль?
-        </Link>
-        <button className="btn-primary w-full">Войти</button>
-      </form>
+      <LoginForm />
     </AuthShell>
   );
 }

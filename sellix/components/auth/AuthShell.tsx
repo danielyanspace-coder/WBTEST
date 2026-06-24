@@ -56,21 +56,30 @@ export function AuthShell({
 
 export function Field({
   label,
+  name,
   type = "text",
   placeholder,
   hint,
+  defaultValue,
+  required,
 }: {
   label: string;
+  name?: string;
   type?: string;
   placeholder?: string;
   hint?: string;
+  defaultValue?: string;
+  required?: boolean;
 }) {
   return (
     <label className="mb-4 block">
       <span className="mb-1.5 block text-sm font-medium text-white/90">{label}</span>
       <input
+        name={name}
         type={type}
         placeholder={placeholder}
+        defaultValue={defaultValue}
+        required={required}
         className="w-full rounded-xl border border-line bg-ink-700 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-muted focus:border-lime/60"
       />
       {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}

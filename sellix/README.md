@@ -21,11 +21,15 @@ npm run dev               # http://localhost:3000
 
 ```bash
 cd sellix
-cp .env.example .env      # заполните значения
+cp .env.example .env      # заполните значения (AUTH_SECRET, WB_KEY_ENCRYPTION_SECRET, DATABASE_URL)
 docker compose up -d --build
+docker compose exec web npm run db:migrate   # применить миграции
 ```
 
 Поднимет приложение (`:3000`) и PostgreSQL с pgvector (для AI/RAG).
+
+При локальной разработке: после `npm install` примените схему к БД командой
+`npm run db:push` (быстро) или `npm run db:migrate` (через миграции).
 
 ---
 
@@ -35,8 +39,9 @@ docker compose up -d --build
 |---|---|
 | Фронт/бэк | Next.js 14 (App Router) + TypeScript |
 | Стили | TailwindCSS (дизайн-система BENTO) |
-| Иконки | lucide-react |
-| БД (план) | PostgreSQL + pgvector |
+| Иконки | собственный SVG-набор (`components/ui/icons.tsx`) |
+| БД | PostgreSQL + Drizzle ORM (pgvector для RAG) |
+| Авторизация | своя на JWT (jose) + bcrypt, cookie-сессии |
 | AI | OpenAI + RAG (чат по справочнику WB) |
 | Оплата | mock сейчас → ЮKassa перед продом |
 
@@ -57,10 +62,18 @@ docker compose up -d --build
 ## 🔜 Что дальше (бэкенд и логика)
 
 См. `ROADMAP` в `/NAVIGATION.md` (корень репозитория). Кратко:
-1. Auth (next-auth) + БД (Prisma) + модели.
-2. Подключение WB API: шифрование ключа, загрузка данных.
+1. ✅ Auth + БД (Drizzle/PostgreSQL) + модели — **готово (этап 2)**.
+2. Подключение WB API: проверка ключа, загрузка данных (каркас готов).
 3. AI-чат: OpenAI + RAG по справочнику WB (pgvector).
 4. Биллинг ЮKassa + реферальные начисления и выплаты.
 5. Фичи на реальных данных: репрайсер, отзывы, аналитика, реклама, SEO.
+
+## 🔐 Что добавил этап 2
+
+- Регистрация/вход с cookie-сессией (JWT), выход.
+- Пробный период 7 дней + создание подписки при регистрации.
+- Реферальная привязка по коду и ссылке `/r/CODE` (начисления 20% — модель готова).
+- Защита кабинета через `middleware.ts`.
+- Подключение магазина WB: ключ шифруется (AES-256-GCM) и хранится в БД.
 
 Карта файлов и «где что лежит» — в **`/NAVIGATION.md`**.

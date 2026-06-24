@@ -1,6 +1,7 @@
 import { ShieldCheck, KeyRound, CheckCircle2 } from "@/components/ui/icons";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Term } from "@/components/ui/Term";
+import { ConnectForm } from "@/components/dashboard/ConnectForm";
 
 const scopes = [
   "Аналитика и статистика",
@@ -28,18 +29,7 @@ export default function ConnectPage() {
             </div>
           </div>
 
-          {/* TODO(wb): POST /api/wb/connect — шифрование и сохранение ключа, проверка валидности */}
-          <form action="/dashboard" className="space-y-4">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Токен WB API</span>
-              <textarea
-                rows={3}
-                placeholder="eyJhbGciOiJ..."
-                className="w-full rounded-xl border border-line bg-ink-700 px-4 py-3 font-mono text-xs text-white outline-none focus:border-lime/60"
-              />
-            </label>
-            <button className="btn-primary">Подключить магазин</button>
-          </form>
+          <ConnectForm />
 
           <div className="mt-6 rounded-2xl border border-line bg-ink-800 p-4">
             <div className="mb-2 text-sm font-semibold">Где взять ключ?</div>

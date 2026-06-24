@@ -4,9 +4,13 @@
 > по всему репозиторию. Обновляем при добавлении новых модулей.
 
 **Продукт:** SELLIX — AI-платформа для продавцов Wildberries.
-**Стек:** Next.js 14 (App Router) + TypeScript + TailwindCSS. AI: OpenAI + RAG. Оплата: mock → ЮKassa.
+**Стек:** Next.js 14 (App Router) + TypeScript + TailwindCSS. БД: PostgreSQL + Drizzle ORM. Авторизация: своя на JWT (jose) + bcrypt. AI: OpenAI + RAG. Оплата: mock → ЮKassa.
 **Приложение лежит в:** `sellix/`
 **Ветка разработки:** `claude/wb-analytics-crm-features-dvm4p3`
+
+> Примечание по ORM: выбран **Drizzle** (чистый JS, без бинарных движков) —
+> надёжно ставится и собирается. Иконки — **собственный набор** `components/ui/icons.tsx`
+> (системных эмодзи в проекте нет).
 
 ---
 
@@ -59,13 +63,44 @@ sellix/
 │   ├── glossary.ts               # ⭐ словарь сложных слов (для <Term/>)
 │   ├── plans.ts                  # тарифы, TRIAL_DAYS=7, REFERRAL_PERCENT=20
 │   ├── features.ts               # список фич (лендинг + меню)
-│   └── dashboardNav.ts           # пункты меню кабинета
+│   ├── dashboardNav.ts           # пункты меню кабинета
+│   ├── crypto.ts                 # ⭐ AES-256-GCM шифрование ключей WB API
+│   ├── db/
+│   │   ├── schema.ts             # ⭐ СХЕМА БД (users, stores, subscriptions, payments, referral_earnings)
+│   │   └── index.ts              # Drizzle-клиент (pg Pool)
+│   └── auth/
+│       ├── jwt.ts                # ⭐ подпись/проверка JWT (edge-safe, для middleware)
+│       ├── session.ts            # cookie-сессия + getCurrentUser() (Node)
+│       ├── password.ts           # bcrypt hash/verify
+│       └── referral.ts           # генерация кода SELLIX-XXXX
 │
-├── public/                       # статика
+├── app/actions/                  # ⭐ серверные действия (Server Actions)
+│   ├── auth.ts                   # registerAction / loginAction / logoutAction
+│   └── store.ts                  # connectStoreAction (подключение WB, шифрует ключ)
+├── app/r/[code]/route.ts         # реферальная ссылка → /register?ref=CODE
+├── middleware.ts                 # ⭐ защита /dashboard, редиректы auth-страниц
+├── components/auth/AuthForms.tsx # клиентские формы входа/регистрации (useFormState)
+├── components/dashboard/ConnectForm.tsx # форма подключения WB
+│
+├── drizzle/                      # сгенерированные SQL-миграции (drizzle-kit generate)
+├── drizzle.config.ts             # конфиг миграций
+├── public/                       # статика (preview.html — превью лендинга)
 ├── Dockerfile  docker-compose.yml
 ├── .env.example                  # все переменные окружения
 └── README.md
 ```
+
+### 🗄️ База данных и команды
+
+```bash
+npm run db:generate   # сгенерировать SQL-миграции из schema.ts
+npm run db:migrate    # применить миграции к БД (нужен DATABASE_URL)
+npm run db:push       # быстро синхронизировать схему (для разработки)
+npm run db:studio     # визуальный просмотр БД
+```
+
+Таблицы: `users` (+реф.код, пробный период), `stores` (зашифрованный ключ WB),
+`subscriptions` (план/статус/период), `payments`, `referral_earnings` (20%).
 
 ⭐ — ключевые места, к которым возвращаемся чаще всего.
 
@@ -100,9 +135,12 @@ sellix/
 
 ## 🗺️ ROADMAP (этапы сборки)
 
-- [x] **Этап 1 — Дизайн и UI** (текущий): лендинг, auth, кабинет, дизайн-система, Docker.
-- [ ] **Этап 2 — Auth + БД**: next-auth, Prisma, модели (User, Store, Subscription, Referral).
-- [ ] **Этап 3 — WB API**: шифрование ключа, загрузка товаров/заказов/остатков/отзывов.
+- [x] **Этап 1 — Дизайн и UI**: лендинг, auth, кабинет, дизайн-система, Docker.
+- [x] **Этап 1.5 — Иконки**: собственный SVG-набор вместо эмодзи/lucide.
+- [x] **Этап 2 — Auth + БД**: Drizzle + PostgreSQL, своя JWT-авторизация, модели
+      (User, Store, Subscription, Payment, ReferralEarning), middleware, регистрация
+      с пробным периодом и привязкой реферала, подключение WB (шифрование ключа).
+- [ ] **Этап 3 — WB API**: проверка ключа, загрузка товаров/заказов/остатков/отзывов.
 - [ ] **Этап 4 — AI + RAG**: OpenAI, загрузка справочника WB в pgvector, `/api/ai/chat`.
 - [ ] **Этап 5 — Биллинг**: ЮKassa (приём + автопродление) + реферальные начисления/выплаты.
 - [ ] **Этап 6 — Фичи на данных**: репрайсер, автоответы, аналитика, биддер, SEO.
