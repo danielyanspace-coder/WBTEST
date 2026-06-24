@@ -24,22 +24,36 @@ export function ChatBox({
   ]);
   const [input, setInput] = useState("");
 
-  function send(text: string) {
+  const [loading, setLoading] = useState(false);
+
+  async function send(text: string) {
     const q = text.trim();
-    if (!q) return;
+    if (!q || loading) return;
     setMessages((m) => [...m, { role: "user", text: q }]);
     setInput("");
-    // Демо-ответ. В проде здесь будет ответ модели по справочнику.
-    setTimeout(() => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: q }),
+      });
+      const data = await res.json();
+      const sources = (data.sources ?? [])
+        .map((s: { title: string }) => s.title)
+        .join(", ");
       setMessages((m) => [
         ...m,
-        {
-          role: "ai",
-          text: "Это демо-ответ. После подключения OpenAI + RAG я найду точный ответ в справочнике Wildberries и приведу ссылку на раздел.",
-          source: "Справочник WB · раздел «Правила»",
-        },
+        { role: "ai", text: data.answer ?? "Не удалось ответить.", source: sources || undefined },
       ]);
-    }, 500);
+    } catch {
+      setMessages((m) => [
+        ...m,
+        { role: "ai", text: "Сеть недоступна, попробуйте ещё раз." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

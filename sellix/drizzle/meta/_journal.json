@@ -8,6 +8,13 @@
       "when": 1782310530367,
       "tag": "0000_lowly_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782315386501,
+      "tag": "0001_magenta_hellfire_club",
+      "breakpoints": true
     }
   ]
 }

@@ -10,6 +10,9 @@ import {
   uuid,
   text,
   integer,
+  real,
+  boolean,
+  jsonb,
   timestamp,
 } from "drizzle-orm/pg-core";
 
@@ -109,6 +112,71 @@ export const referralEarnings = pgTable("referral_earnings", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// ─── Данные магазина (загружаются из WB API, этап 3) ────────────
+export const products = pgTable("products", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+  nmId: integer("nm_id").notNull(), // артикул WB
+  title: text("title"),
+  brand: text("brand"),
+  category: text("category"),
+  priceCurrent: integer("price_current"), // рубли
+  discount: integer("discount"),
+  rating: real("rating"),
+  minProfitPrice: integer("min_profit_price"), // минимально допустимая цена (для репрайсера)
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const stocks = pgTable("stocks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+  nmId: integer("nm_id").notNull(),
+  warehouse: text("warehouse"),
+  quantity: integer("quantity").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const salesDaily = pgTable("sales_daily", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+  date: text("date").notNull(), // YYYY-MM-DD
+  orders: integer("orders").notNull().default(0),
+  buyouts: integer("buyouts").notNull().default(0),
+  revenue: integer("revenue").notNull().default(0), // рубли
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const feedbacks = pgTable("feedbacks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+  wbId: text("wb_id").notNull(), // id отзыва в WB
+  nmId: integer("nm_id"),
+  productName: text("product_name"),
+  authorName: text("author_name"),
+  rating: integer("rating"),
+  text: text("text"),
+  answered: boolean("answered").notNull().default(false),
+  answerText: text("answer_text"),
+  createdAt: timestamp("created_at", { withTimezone: true }),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ─── Справочник WB для AI-чата (RAG, этап 4) ─────────────────────
+// embedding хранится как массив чисел (jsonb) — косинусная близость считается в Node,
+// поэтому pgvector не требуется и БД остаётся обычным PostgreSQL.
+export const handbookDocs = pgTable("handbook_docs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  source: text("source").notNull().default("WB"),
+  title: text("title").notNull(),
+  url: text("url"),
+  content: text("content").notNull(),
+  embedding: jsonb("embedding").$type<number[]>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Store = typeof stores.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
+export type Product = typeof products.$inferSelect;
+export type Feedback = typeof feedbacks.$inferSelect;
+export type HandbookDoc = typeof handbookDocs.$inferSelect;

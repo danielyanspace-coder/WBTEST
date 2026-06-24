@@ -1,26 +1,32 @@
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Term } from "@/components/ui/Term";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getPriceRecs } from "@/lib/data/dashboard";
 
-const rules = [
+const DEMO = [
   { name: "Платье летнее", price: "1 540 ₽", action: "Поднять до 1 690 ₽", reason: "Высокий спрос, мало остатка" },
   { name: "Футболка базовая", price: "690 ₽", action: "Оставить", reason: "Цена оптимальна" },
   { name: "Куртка демисезон", price: "4 200 ₽", action: "Снизить до 3 990 ₽", reason: "Залёживается на складе" },
 ];
 
-export default function PricingToolPage() {
+export default async function PricingToolPage() {
+  const user = await getCurrentUser();
+  const recs = user ? await getPriceRecs(user.id) : [];
+  const rows = recs.length ? recs : DEMO;
+
   return (
     <PageShell title="Умные цены">
       <div className="bento-lime mb-4 flex items-center justify-between p-6">
         <div>
           <div className="font-display text-xl font-bold">
-            <Term k="репрайсер">Репрайсер</Term> включён
+            <Term k="репрайсер">Репрайсер</Term> готов к работе
           </div>
           <div className="text-sm text-ink/80">
-            Робот держит прибыль и не даёт товару залёживаться
+            Держит прибыль и не даёт товару залёживаться
           </div>
         </div>
         <span className="rounded-full bg-ink px-3 py-1 text-sm font-semibold text-white">
-          авто
+          {recs.length ? "по вашим данным" : "пример"}
         </span>
       </div>
 
@@ -31,7 +37,7 @@ export default function PricingToolPage() {
           <div className="col-span-3">Рекомендация</div>
           <div className="col-span-3">Почему</div>
         </div>
-        {rules.map((r, i) => (
+        {rows.map((r, i) => (
           <div key={i} className="grid grid-cols-12 items-center border-b border-line px-5 py-4 text-sm last:border-0">
             <div className="col-span-4 font-medium">{r.name}</div>
             <div className="col-span-2">{r.price}</div>
@@ -47,8 +53,8 @@ export default function PricingToolPage() {
 
       <p className="mt-4 text-xs text-muted">
         Учитываем спрос, остатки, <Term k="оборачиваемость">оборачиваемость</Term> и
-        вашу минимальную маржу. Цены меняются по расписанию — с подтверждением или
-        полностью автоматически.
+        минимальную маржу. Изменения применяются к WB по расписанию — с подтверждением
+        или автоматически (с учётом <Term k="карантин цены">карантина цены</Term>).
       </p>
     </PageShell>
   );
