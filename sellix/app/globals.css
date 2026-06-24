@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0b0b0c;
+  --foreground: #fafafa;
+}
+
+* {
+  border-color: theme("colors.line");
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Тонкая сетка-фон в духе bento-дашбордов */
+.bg-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+@layer components {
+  /* Базовая bento-карточка: скруглённый блок с лёгким градиентом и тонкой рамкой */
+  .bento {
+    @apply relative overflow-hidden rounded-bento border border-line bg-ink-700 shadow-bento;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+  }
+
+  .bento-lime {
+    @apply relative overflow-hidden rounded-bento text-ink;
+    background: linear-gradient(135deg, #d4ff1a 0%, #c7f503 60%, #aee000 100%);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition active:scale-[0.98];
+  }
+  .btn-primary {
+    @apply btn bg-lime text-ink hover:bg-lime-bright;
+  }
+  .btn-ghost {
+    @apply btn border border-line text-white hover:bg-ink-600;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-ink-600 px-3 py-1 text-xs font-medium text-muted;
+  }
+
+  .section {
+    @apply mx-auto w-full max-w-6xl px-5;
+  }
+
+  /* Подчёркнутый «сложный термин» с пунктиром — на него вешается всплывающая подсказка */
+  .term {
+    @apply cursor-help border-b border-dashed border-lime/60 text-white;
+  }
+}
