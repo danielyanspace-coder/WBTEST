@@ -1,5 +1,5 @@
 import { PageShell } from "@/components/dashboard/PageShell";
-import { Copy, Wallet, Users } from "lucide-react";
+import { Copy, Wallet, Users } from "@/components/ui/icons";
 import { REFERRAL_PERCENT } from "@/lib/plans";
 
 export default function ReferralPage() {

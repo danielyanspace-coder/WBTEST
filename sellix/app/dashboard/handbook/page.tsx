@@ -1,6 +1,6 @@
 import { PageShell } from "@/components/dashboard/PageShell";
 import { ChatBox } from "@/components/dashboard/ChatBox";
-import { BookOpen } from "lucide-react";
+import { BookOpen } from "@/components/ui/icons";
 
 const topics = [
   "Комиссии и тарифы",

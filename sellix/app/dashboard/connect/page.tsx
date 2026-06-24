@@ -1,4 +1,4 @@
-import { ShieldCheck, KeyRound, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, KeyRound, CheckCircle2 } from "@/components/ui/icons";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Term } from "@/components/ui/Term";
 

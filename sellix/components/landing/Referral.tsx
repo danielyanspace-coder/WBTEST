@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Gift, Users, Wallet } from "lucide-react";
+import { Gift, Users, Wallet } from "@/components/ui/icons";
 import { REFERRAL_PERCENT } from "@/lib/plans";
 
 export function Referral() {

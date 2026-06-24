@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Sparkles } from "@/components/ui/icons";
 import { CrystalBlob, WaveLine, MiniBars } from "@/components/visuals/Abstract";
 import { Term } from "@/components/ui/Term";
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, TrendingUp, Star, Package, Wallet } from "lucide-react";
+import { ArrowUpRight, TrendingUp, Star, Package, Wallet } from "@/components/ui/icons";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { MiniBars, WaveLine } from "@/components/visuals/Abstract";
 import { Term } from "@/components/ui/Term";

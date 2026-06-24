@@ -12,7 +12,7 @@ import {
   CreditCard,
   Settings,
   PlugZap,
-} from "lucide-react";
+} from "@/components/ui/icons";
 
 export type NavItem = {
   href: string;

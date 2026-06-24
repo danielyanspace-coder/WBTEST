@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
+import { Heart } from "@/components/ui/icons";
 
 export function Footer() {
   return (
@@ -37,7 +38,10 @@ export function Footer() {
       </div>
       <div className="section flex flex-col items-center justify-between gap-2 border-t border-line py-6 text-xs text-muted md:flex-row">
         <span>© {new Date().getFullYear()} SELLIX. Все права защищены.</span>
-        <span>Сделано для продавцов Wildberries 💚</span>
+        <span className="inline-flex items-center gap-1.5">
+          Сделано для продавцов Wildberries
+          <Heart className="h-3.5 w-3.5 text-lime" />
+        </span>
       </div>
     </footer>
   );

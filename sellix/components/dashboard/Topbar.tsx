@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown } from "@/components/ui/icons";
 
 export function Topbar({ title }: { title: string }) {
   return (

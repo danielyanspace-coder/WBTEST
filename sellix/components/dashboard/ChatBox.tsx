@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, Link2 } from "@/components/ui/icons";
 
 type Msg = { role: "user" | "ai"; text: string; source?: string };
 
@@ -61,7 +61,9 @@ export function ChatBox({
             >
               {m.text}
               {m.source && (
-                <div className="mt-2 text-xs text-lime">📎 {m.source}</div>
+                <div className="mt-2 flex items-center gap-1 text-xs text-lime">
+                  <Link2 className="h-3 w-3" /> {m.source}
+                </div>
               )}
             </div>
           </div>

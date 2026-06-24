@@ -1,4 +1,4 @@
-import { KeyRound, Zap, Rocket } from "lucide-react";
+import { KeyRound, Zap, Rocket } from "@/components/ui/icons";
 
 const steps = [
   {

@@ -1,5 +1,5 @@
 import { PageShell } from "@/components/dashboard/PageShell";
-import { Star, Bot } from "lucide-react";
+import { Star, Bot } from "@/components/ui/icons";
 import { Term } from "@/components/ui/Term";
 
 const reviews = [

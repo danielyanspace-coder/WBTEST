@@ -1,6 +1,6 @@
 import { PageShell } from "@/components/dashboard/PageShell";
 import { PLANS, TRIAL_DAYS } from "@/lib/plans";
-import { Check } from "lucide-react";
+import { Check } from "@/components/ui/icons";
 
 export default function BillingPage() {
   return (

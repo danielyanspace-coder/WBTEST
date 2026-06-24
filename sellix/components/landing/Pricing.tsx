@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check } from "@/components/ui/icons";
 import { PLANS, TRIAL_DAYS } from "@/lib/plans";
 
 export function Pricing() {

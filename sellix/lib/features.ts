@@ -9,7 +9,7 @@ import {
   Bell,
   Sparkles,
   BookOpen,
-} from "lucide-react";
+} from "@/components/ui/icons";
 
 /** Список фич продукта — используется на лендинге и в меню кабинета. */
 export type Feature = {
