@@ -17,7 +17,9 @@ import {
   adSettings,
 } from "@/lib/db/schema";
 import { getStoreForUser } from "@/lib/wb/store";
-import { recommendCpm } from "@/lib/ads/bidder";
+import { recommendBid, DEFAULT_BID_SETTINGS } from "@/lib/ads/engine";
+import { recommendPrice } from "@/lib/pricing/engine";
+import type { DailyPoint } from "@/lib/ml/forecast";
 
 const RUB = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
@@ -97,7 +99,7 @@ export async function getFeedbacks(userId: string) {
     .limit(30);
 }
 
-/** Простые рекомендации по ценам: мало остатка — поднять, много + давно — снизить. */
+/** Рекомендации по ценам через адаптивный движок (репрайсер 2.0). */
 export async function getPriceRecs(userId: string) {
   const store = await getStoreForUser(userId);
   if (!store) return [];
@@ -107,19 +109,34 @@ export async function getPriceRecs(userId: string) {
   const qtyByNm = new Map<number, number>();
   for (const s of stk) qtyByNm.set(s.nmId, (qtyByNm.get(s.nmId) ?? 0) + s.quantity);
 
+  // Продажи магазина (распределяем как прокси спроса на товар)
+  const storeSales = await db.select().from(salesDaily).where(eq(salesDaily.storeId, store.id));
+  const share = 1 / Math.max(1, prods.length);
+  const points: DailyPoint[] = storeSales.map((s) => ({
+    date: s.date,
+    orders: s.orders * share,
+    buyouts: s.buyouts * share,
+    revenue: s.revenue * share,
+  }));
+
   return prods.slice(0, 20).map((p) => {
     const qty = qtyByNm.get(p.nmId) ?? 0;
     const price = p.priceCurrent ?? 0;
-    let action = "Оставить";
-    let reason = "Цена оптимальна";
-    if (qty > 0 && qty < 10) {
-      action = `Поднять до ${RUB(Math.round(price * 1.05))}`;
-      reason = "Мало остатка, высокий спрос";
-    } else if (qty > 100) {
-      action = `Снизить до ${RUB(Math.round(price * 0.95))}`;
-      reason = "Залёживается на складе";
-    }
-    return { name: p.title ?? `Артикул ${p.nmId}`, price: RUB(price), action, reason, qty };
+    const rec = recommendPrice({ price, minProfitPrice: p.minProfitPrice, stock: qty, sales: points });
+    const action =
+      rec.action === "up" ? `Поднять до ${RUB(rec.price)}` : rec.action === "down" ? `Снизить до ${RUB(rec.price)}` : "Оставить";
+    return {
+      name: p.title ?? `Артикул ${p.nmId}`,
+      nmId: p.nmId,
+      price: RUB(price),
+      oldPriceNum: price,
+      newPriceNum: rec.price,
+      actionType: rec.action,
+      action,
+      reason: rec.reason,
+      qty,
+      confidence: rec.confidence,
+    };
   });
 }
 
@@ -153,18 +170,19 @@ export async function getReferral(userId: string) {
 
 export async function getAds(userId: string) {
   const store = await getStoreForUser(userId);
-  const defaults = { targetDrr: 10, minCpm: 100, maxCpm: 500, auto: false };
+  const defaults = { ...DEFAULT_BID_SETTINGS, auto: false };
   if (!store) return { connected: false, settings: defaults, campaigns: [] as any[] };
 
   const setRows = await db.select().from(adSettings).where(eq(adSettings.storeId, store.id)).limit(1);
-  const s = setRows[0]
-    ? { targetDrr: setRows[0].targetDrr, minCpm: setRows[0].minCpm, maxCpm: setRows[0].maxCpm, auto: setRows[0].auto }
-    : defaults;
+  const s = setRows[0] ? { ...DEFAULT_BID_SETTINGS, ...setRows[0] } : defaults;
 
   const camps = await db.select().from(adCampaigns).where(eq(adCampaigns.storeId, store.id));
   const campaigns = camps.map((c) => ({
     ...c,
-    rec: recommendCpm({ cpm: c.cpm, drr: c.drr, orders: c.orders }, s),
+    rec: recommendBid(
+      { cpm: c.cpm, spend: c.spend, revenue: c.revenue, orders: c.orders, views: c.views, clicks: c.clicks },
+      s as any
+    ),
   }));
   return { connected: true, settings: s, campaigns };
 }

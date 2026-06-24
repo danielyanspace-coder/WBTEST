@@ -1,7 +1,25 @@
+import { eq } from "drizzle-orm";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Field } from "@/components/auth/AuthShell";
+import { NotifySettings } from "@/components/dashboard/NotifySettings";
+import { getCurrentUser } from "@/lib/auth/session";
+import { db } from "@/lib/db";
+import { notificationSettings } from "@/lib/db/schema";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const user = await getCurrentUser();
+  const connected = Boolean(user?.telegramChatId);
+  const setRow = user
+    ? (await db.select().from(notificationSettings).where(eq(notificationSettings.userId, user.id)).limit(1))[0]
+    : null;
+  const flags = {
+    outOfStock: setRow?.outOfStock ?? true,
+    reviews: setRow?.reviews ?? true,
+    budget: setRow?.budget ?? true,
+    priceChanges: setRow?.priceChanges ?? true,
+    weeklyDigest: setRow?.weeklyDigest ?? true,
+  };
+
   return (
     <PageShell title="Настройки">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -40,6 +58,8 @@ export default function SettingsPage() {
           />
           <button className="btn-primary mt-3">Сохранить стиль</button>
         </div>
+
+        <NotifySettings connected={connected} flags={flags} />
       </div>
     </PageShell>
   );

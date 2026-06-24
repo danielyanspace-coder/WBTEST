@@ -22,6 +22,13 @@
       "when": 1782316404502,
       "tag": "0002_tired_lake",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782328192951,
+      "tag": "0003_numerous_taskmaster",
+      "breakpoints": true
     }
   ]
 }

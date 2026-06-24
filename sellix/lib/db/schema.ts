@@ -57,6 +57,9 @@ export const users = pgTable("users", {
   referredById: uuid("referred_by_id"), // кто пригласил (логическая ссылка на users.id)
   // Пробный период
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+  // Telegram-уведомления
+  telegramChatId: text("telegram_chat_id"),
+  telegramLinkCode: text("telegram_link_code"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -198,7 +201,49 @@ export const adSettings = pgTable("ad_settings", {
   targetDrr: integer("target_drr").notNull().default(10), // целевой ДРР, %
   maxCpm: integer("max_cpm").notNull().default(500),
   minCpm: integer("min_cpm").notNull().default(100),
+  dailyBudget: integer("daily_budget").notNull().default(0), // ₽/день, 0 = без лимита
+  hardDrrCeiling: integer("hard_drr_ceiling").notNull().default(25), // потолок ДРР, %
+  killSwitch: boolean("kill_switch").notNull().default(true),
   auto: boolean("auto").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ─── История изменений цены (для адаптивного репрайсера и объяснимости) ──
+export const priceEvents = pgTable("price_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+  nmId: integer("nm_id").notNull(),
+  oldPrice: integer("old_price"),
+  newPrice: integer("new_price"),
+  reason: text("reason"),
+  confidence: real("confidence"),
+  applied: boolean("applied").notNull().default(false),
+  salesBefore: integer("sales_before"),
+  salesAfter: integer("sales_after"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ─── Лог уведомлений (в т.ч. отправленных в Telegram) ──────────
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  body: text("body"),
+  severity: text("severity").notNull().default("info"), // info | warning | critical
+  dedupeKey: text("dedupe_key"), // чтобы не слать одно и то же дважды в сутки
+  sentTelegram: boolean("sent_telegram").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const notificationSettings = pgTable("notification_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  outOfStock: boolean("out_of_stock").notNull().default(true),
+  reviews: boolean("reviews").notNull().default(true),
+  budget: boolean("budget").notNull().default(true),
+  priceChanges: boolean("price_changes").notNull().default(true),
+  weeklyDigest: boolean("weekly_digest").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

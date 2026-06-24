@@ -43,6 +43,31 @@
 
 ---
 
+## 3.5 🔵 TELEGRAM-УВЕДОМЛЕНИЯ (рекомендую — сильно повышает удержание)
+
+| Переменная | Что это | Как получить |
+|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | Токен бота | Напиши @BotFather → /newbot → получишь токен |
+| `TELEGRAM_BOT_USERNAME` | Имя бота без @ | Его же выдаст BotFather (например `sellix_alerts_bot`) |
+
+После деплоя один раз привязать вебхук бота:
+```
+curl "https://api.telegram.org/bot<ТОКЕН>/setWebhook?url=https://ТВОЙ_САЙТ/api/telegram/webhook"
+```
+Без бота сайт работает — просто не будет пуш-уведомлений.
+
+## 3.6 🟣 АВТОМАТИЗАЦИЯ (cron) — синхронизация, автобиддер, уведомления
+
+| Переменная | Что это | Как получить |
+|---|---|---|
+| `CRON_SECRET` | Пароль для планировщика | Сгенерируй: `openssl rand -base64 32` |
+
+Поставь в крон сервера (например, раз в 30 минут):
+```
+*/30 * * * * curl -s "https://ТВОЙ_САЙТ/api/cron/tick?secret=ЗНАЧЕНИЕ_CRON_SECRET" > /dev/null
+```
+Это: подтягивает данные из WB, применяет автобиддер (где включён) и шлёт сигналы.
+
 ## 4. 🔑 Что вводит КАЖДЫЙ пользователь сам (тебе присылать не нужно)
 
 **Токен Wildberries API** — каждый продавец вставляет свой токен прямо на сайте
@@ -80,6 +105,10 @@ WB_KEY_ENCRYPTION_SECRET = (openssl rand -base64 32)
 ADMIN_SECRET          = (openssl rand -base64 32)
 DATABASE_URL          = (оставить по умолчанию или своя БД)
 OPENAI_API_KEY        = (ключ OpenAI)            ← для ИИ
+ADMIN_SECRET          = (openssl rand -base64 32)
+CRON_SECRET           = (openssl rand -base64 32) ← для автоматизации
+TELEGRAM_BOT_TOKEN    = (от @BotFather)          ← для уведомлений
+TELEGRAM_BOT_USERNAME = (имя бота без @)
 YOOKASSA_SHOP_ID      = (если нужен приём оплаты)
 YOOKASSA_SECRET_KEY   = (если нужен приём оплаты)
 ```

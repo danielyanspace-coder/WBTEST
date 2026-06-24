@@ -12,12 +12,20 @@ type Campaign = {
   views: number;
   orders: number;
   drr: number | null;
-  rec: { cpm: number; action: "up" | "down" | "keep"; reason: string };
+  rec: { cpm: number; action: "up" | "down" | "keep" | "pause"; reason: string };
 };
 
-type Settings = { targetDrr: number; minCpm: number; maxCpm: number; auto: boolean };
+type Settings = {
+  targetDrr: number;
+  minCpm: number;
+  maxCpm: number;
+  auto: boolean;
+  dailyBudget?: number;
+  hardDrrCeiling?: number;
+  killSwitch?: boolean;
+};
 
-const ACTION_LABEL = { up: "Поднять", down: "Снизить", keep: "Оставить" } as const;
+const ACTION_LABEL = { up: "Поднять", down: "Снизить", keep: "Оставить", pause: "Пауза" } as const;
 
 export function AdsManager({
   connected,
@@ -94,7 +102,40 @@ export function AdsManager({
               />
             </label>
           </div>
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <label className="block">
+              <span className="text-xs text-muted">Дн. бюджет, ₽ (0=∞)</span>
+              <input
+                type="number"
+                value={s.dailyBudget ?? 0}
+                onChange={(e) => setS({ ...s, dailyBudget: +e.target.value })}
+                className="mt-1 w-full rounded-xl border border-line bg-ink-700 px-3 py-2 text-sm outline-none focus:border-lime/60"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-muted">Потолок ДРР, %</span>
+              <input
+                type="number"
+                value={s.hardDrrCeiling ?? 25}
+                onChange={(e) => setS({ ...s, hardDrrCeiling: +e.target.value })}
+                className="mt-1 w-full rounded-xl border border-line bg-ink-700 px-3 py-2 text-sm outline-none focus:border-lime/60"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-muted">Защита бюджета</span>
+              <button
+                type="button"
+                onClick={() => setS({ ...s, killSwitch: !(s.killSwitch ?? true) })}
+                className={
+                  "mt-1 w-full rounded-xl px-3 py-2 text-sm font-semibold " +
+                  ((s.killSwitch ?? true) ? "bg-lime text-ink" : "border border-line text-muted")
+                }
+              >
+                {(s.killSwitch ?? true) ? "Вкл" : "Выкл"}
+              </button>
+            </label>
+          </div>
+          <div className="mt-4 flex items-center gap-3 flex-wrap">
             <button onClick={save} disabled={pending} className="btn-primary disabled:opacity-60">
               Сохранить
             </button>

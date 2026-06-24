@@ -1,33 +1,22 @@
 /**
- * Логика автобиддера: рекомендация ставки (CPM) по целевому ДРР.
- * ДРР (доля рекламных расходов) = расход / выручка * 100.
- * Высокий ДРР → снижаем ставку; низкий при наличии заказов → можно поднять.
+ * Совместимость: биддер переехал в lib/ads/engine.ts (адаптивный движок с
+ * защитой бюджета). Здесь — реэкспорт и тонкая обёртка под старый вызов.
  */
-export type BidInput = { cpm: number | null; drr: number | null; orders: number };
-export type BidSettings = { targetDrr: number; minCpm: number; maxCpm: number };
-export type BidRec = { cpm: number; action: "up" | "down" | "keep"; reason: string };
+export * from "./engine";
+import { recommendBid, type BidSettings, DEFAULT_BID_SETTINGS } from "./engine";
 
-export function recommendCpm(c: BidInput, s: BidSettings): BidRec {
-  const cpm = c.cpm ?? s.minCpm;
-
-  if (c.drr == null) {
-    return { cpm, action: "keep", reason: "Мало данных — оставляем ставку" };
-  }
-  if (c.drr > s.targetDrr * 1.2) {
-    const next = Math.max(s.minCpm, Math.round(cpm * 0.9));
-    return {
-      cpm: next,
-      action: next < cpm ? "down" : "keep",
-      reason: `ДРР ${c.drr.toFixed(0)}% выше цели ${s.targetDrr}% — снижаем ставку`,
-    };
-  }
-  if (c.drr < s.targetDrr * 0.8 && c.orders > 0) {
-    const next = Math.min(s.maxCpm, Math.round(cpm * 1.1));
-    return {
-      cpm: next,
-      action: next > cpm ? "up" : "keep",
-      reason: `ДРР ${c.drr.toFixed(0)}% ниже цели — можно поднять ставку и забрать больше заказов`,
-    };
-  }
-  return { cpm, action: "keep", reason: `ДРР ${c.drr.toFixed(0)}% в норме` };
+/** Старый упрощённый интерфейс — делегирует новому движку. */
+export function recommendCpm(
+  c: { cpm: number | null; drr: number | null; orders: number },
+  s: Partial<BidSettings>
+) {
+  const settings = { ...DEFAULT_BID_SETTINGS, ...s };
+  // приблизительно восстанавливаем расход/выручку из ДРР для движка
+  const revenue = c.orders * 1000;
+  const spend = c.drr != null ? Math.round((revenue * c.drr) / 100) : 0;
+  const rec = recommendBid(
+    { cpm: c.cpm, spend, revenue, orders: c.orders, views: 0, clicks: c.orders * 5 },
+    settings
+  );
+  return { cpm: rec.cpm, action: rec.action === "pause" ? "down" : rec.action, reason: rec.reason };
 }

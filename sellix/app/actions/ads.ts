@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { adCampaigns, adSettings } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getClientForUser } from "@/lib/wb/store";
-import { recommendCpm } from "@/lib/ads/bidder";
+import { recommendBid, DEFAULT_BID_SETTINGS } from "@/lib/ads/engine";
 
 /** Применить ставку к одной кампании. */
 export async function applyBidAction(advertId: number, type: number, cpm: number) {
@@ -32,7 +32,10 @@ export async function saveAdSettingsAction(input: {
   targetDrr: number;
   maxCpm: number;
   minCpm: number;
-  auto: boolean;
+  dailyBudget?: number;
+  hardDrrCeiling?: number;
+  killSwitch?: boolean;
+  auto?: boolean;
 }) {
   const user = await getCurrentUser();
   if (!user) return { error: "Войдите снова" };
@@ -61,12 +64,15 @@ export async function runBidderAction() {
   if (!ctx) return { error: "Сначала подключите магазин" };
 
   const setRows = await db.select().from(adSettings).where(eq(adSettings.storeId, ctx.store.id)).limit(1);
-  const s = setRows[0] ?? { targetDrr: 10, minCpm: 100, maxCpm: 500 };
+  const s = setRows[0] ? { ...DEFAULT_BID_SETTINGS, ...setRows[0] } : DEFAULT_BID_SETTINGS;
   const camps = await db.select().from(adCampaigns).where(eq(adCampaigns.storeId, ctx.store.id));
 
   let applied = 0;
   for (const c of camps) {
-    const rec = recommendCpm({ cpm: c.cpm, drr: c.drr, orders: c.orders }, s as any);
+    const rec = recommendBid(
+      { cpm: c.cpm, spend: c.spend, revenue: c.revenue, orders: c.orders, views: c.views, clicks: c.clicks },
+      s as any
+    );
     if (rec.action !== "keep" && c.type != null) {
       try {
         await ctx.client.setAdvertCpm(c.advertId, c.type, rec.cpm);
