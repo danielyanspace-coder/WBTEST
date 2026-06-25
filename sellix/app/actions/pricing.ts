@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { priceEvents } from "@/lib/db/schema";
+import { priceEvents, salesDaily } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getClientForUser } from "@/lib/wb/store";
 import { notify } from "@/lib/notify/engine";
@@ -26,6 +26,14 @@ export async function applyPriceAction(input: {
 
   try {
     await ctx.client.setPrice(input.nmId, input.newPrice);
+
+    // Снимок спроса «до» (для последующей оценки эластичности)
+    const before = await db
+      .select({ orders: sql<number>`coalesce(sum(${salesDaily.orders}),0)` })
+      .from(salesDaily)
+      .where(eq(salesDaily.storeId, ctx.store.id));
+    const salesBefore = before[0]?.orders ?? 0;
+
     await db.insert(priceEvents).values({
       storeId: ctx.store.id,
       nmId: input.nmId,
@@ -34,6 +42,7 @@ export async function applyPriceAction(input: {
       reason: input.reason ?? null,
       confidence: input.confidence ?? null,
       applied: true,
+      salesBefore,
     });
 
     const deltaPct = Math.round(((input.newPrice - input.oldPrice) / Math.max(1, input.oldPrice)) * 100);

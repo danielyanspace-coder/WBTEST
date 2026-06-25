@@ -14,19 +14,31 @@ import {
   adCampaigns,
   adSettings,
   subscriptions,
+  salesDaily,
   notifications,
   notificationSettings,
 } from "@/lib/db/schema";
 import { sendTelegram } from "./telegram";
 import { recommendBid, DEFAULT_BID_SETTINGS } from "@/lib/ads/engine";
+import { anomalyDrop, type DailyPoint } from "@/lib/ml/forecast";
+import { getStoreHealth } from "@/lib/health/score";
 
 type NotifyInput = {
-  type: "stock" | "reviews" | "budget" | "price" | "trial" | "digest";
+  type: "stock" | "reviews" | "budget" | "price" | "trial" | "digest" | "sales";
   title: string;
   body?: string;
   severity?: "info" | "warning" | "critical";
   dedupeKey?: string;
 };
+
+function isoWeek(d = new Date()) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = (t.getUTCDay() + 6) % 7;
+  t.setUTCDate(t.getUTCDate() - day + 3);
+  const first = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+  const week = 1 + Math.round(((+t - +first) / 86400000 - 3 + ((first.getUTCDay() + 6) % 7)) / 7);
+  return `${t.getUTCFullYear()}W${week}`;
+}
 
 const SETTING_FLAG: Record<string, keyof typeof flagDefaults> = {
   stock: "outOfStock",
@@ -151,7 +163,36 @@ export async function runAlertsForUser(userId: string): Promise<number> {
     count++;
   }
 
+  // Резкий обвал продаж (аномалия)
+  const sales = await db.select().from(salesDaily).where(eq(salesDaily.storeId, store.id));
+  const points: DailyPoint[] = sales.map((s) => ({ date: s.date, orders: s.orders, buyouts: s.buyouts, revenue: s.revenue }));
+  const anomaly = anomalyDrop(points);
+  if (anomaly) {
+    await notify(userId, {
+      type: "sales",
+      severity: "critical",
+      title: `Продажи упали на ${anomaly.drop}%`,
+      body: `Сейчас ~${anomaly.recent} заказов/день против обычных ~${anomaly.baseline}. Проверьте цены, рекламу и остатки — возможна потеря позиций.`,
+      dedupeKey: `sales:${new Date().toISOString().slice(0, 10)}`,
+    });
+    count++;
+  }
+
   return count;
+}
+
+/** Еженедельный дайджест в Telegram (раз в неделю). */
+export async function sendWeeklyDigest(userId: string) {
+  const health = await getStoreHealth(userId);
+  if (!health.connected) return;
+  const top = health.actions.slice(0, 3).map((a) => `• ${a.title}`).join("\n") || "• Критичных задач нет — так держать!";
+  await notify(userId, {
+    type: "digest",
+    severity: "info",
+    title: `Итоги недели · здоровье магазина ${health.score}/100 (${health.grade})`,
+    body: `Главное на неделю:\n${top}\n\nОткройте кабинет, чтобы выполнить в один клик.`,
+    dedupeKey: `digest:${isoWeek()}`,
+  });
 }
 
 /** Прогон по всем пользователям (для cron). */
@@ -161,6 +202,7 @@ export async function runAlertsForAll(): Promise<number> {
   for (const u of all) {
     try {
       total += await runAlertsForUser(u.id);
+      await sendWeeklyDigest(u.id); // дедуп раз в неделю внутри
     } catch {}
   }
   return total;

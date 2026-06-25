@@ -15,6 +15,7 @@ import {
   users,
   adCampaigns,
   adSettings,
+  priceEvents,
 } from "@/lib/db/schema";
 import { getStoreForUser } from "@/lib/wb/store";
 import { recommendBid, DEFAULT_BID_SETTINGS } from "@/lib/ads/engine";
@@ -119,10 +120,33 @@ export async function getPriceRecs(userId: string) {
     revenue: s.revenue * share,
   }));
 
+  // Последнее применённое изменение цены по каждому артикулу (для обучения)
+  const events = await db
+    .select()
+    .from(priceEvents)
+    .where(and(eq(priceEvents.storeId, store.id), eq(priceEvents.applied, true)))
+    .orderBy(desc(priceEvents.createdAt))
+    .limit(200);
+  const lastByNm = new Map<number, (typeof events)[number]>();
+  for (const e of events) if (!lastByNm.has(e.nmId)) lastByNm.set(e.nmId, e);
+
   return prods.slice(0, 20).map((p) => {
     const qty = qtyByNm.get(p.nmId) ?? 0;
     const price = p.priceCurrent ?? 0;
-    const rec = recommendPrice({ price, minProfitPrice: p.minProfitPrice, stock: qty, sales: points });
+
+    // Спрос «после» изменения = заказы магазина после даты события
+    const ev = lastByNm.get(p.nmId);
+    let lastEvent = null as null | { oldPrice: number; newPrice: number; salesBefore: number; salesAfter: number };
+    if (ev && ev.oldPrice != null && ev.newPrice != null && ev.salesBefore != null) {
+      const evDay = ev.createdAt ? new Date(ev.createdAt).toISOString().slice(0, 10) : "";
+      const salesAfter = storeSales.filter((s) => s.date > evDay).reduce((a, s) => a + s.orders, 0);
+      if (salesAfter > 0) {
+        lastEvent = { oldPrice: ev.oldPrice, newPrice: ev.newPrice, salesBefore: ev.salesBefore, salesAfter };
+      }
+    }
+
+    const hoursSince = ev?.createdAt ? (Date.now() - +new Date(ev.createdAt)) / 3600000 : undefined;
+    const rec = recommendPrice({ price, minProfitPrice: p.minProfitPrice, stock: qty, sales: points, lastEvent, hoursSinceLastChange: hoursSince });
     const action =
       rec.action === "up" ? `Поднять до ${RUB(rec.price)}` : rec.action === "down" ? `Снизить до ${RUB(rec.price)}` : "Оставить";
     return {

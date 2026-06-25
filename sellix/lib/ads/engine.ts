@@ -87,3 +87,19 @@ export function recommendBid(c: Campaign, s: BidSettings = DEFAULT_BID_SETTINGS)
   if (next > cpm) return { ...base, cpm: next, action: "up", reason: `ДРР ${drr.toFixed(0)}% ниже цели — реклама окупается, поднимаем ставку за заказами` };
   return { ...base, cpm: next, action: "down", reason: `ДРР ${drr.toFixed(0)}% выше цели ${s.targetDrr}% — снижаем ставку, бережём маржу` };
 }
+
+/**
+ * Совет по перебросу бюджета между кампаниями: деньги выгоднее переливать из
+ * самой убыточной (высокий ДРР) в самую окупаемую (низкий ДРР).
+ */
+export function budgetAdvice(camps: (Campaign & { name?: string | null })[]): string | null {
+  const withDrr = camps
+    .map((c) => ({ name: c.name, drr: c.revenue > 0 ? (c.spend / c.revenue) * 100 : null, spend: c.spend }))
+    .filter((c) => c.drr != null && c.spend > 0) as { name?: string | null; drr: number; spend: number }[];
+  if (withDrr.length < 2) return null;
+  const sorted = [...withDrr].sort((a, b) => a.drr - b.drr);
+  const best = sorted[0];
+  const worst = sorted[sorted.length - 1];
+  if (worst.drr - best.drr < 10) return null;
+  return `Переброс бюджета: «${worst.name ?? "кампания"}» (ДРР ${Math.round(worst.drr)}%) тратит дороже, чем «${best.name ?? "кампания"}» (ДРР ${Math.round(best.drr)}%). Снизьте ставку у первой и поднимите у второй — те же деньги принесут больше заказов.`;
+}

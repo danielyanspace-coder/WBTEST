@@ -71,3 +71,20 @@ export function confidence(points: DailyPoint[]): number {
   const bySales = Math.min(1, sales / 30);
   return Math.round((byDays * 0.5 + bySales * 0.5) * 100) / 100;
 }
+
+/**
+ * Детектор аномалий: сравнивает последние 1–2 дня с базовой линией (медиана
+ * предыдущих). Возвращает «провал спроса» в %, если падение значимое.
+ */
+export function anomalyDrop(points: DailyPoint[]): { drop: number; baseline: number; recent: number } | null {
+  const pts = sortByDate(points);
+  if (pts.length < 7) return null;
+  const recent = (pts.slice(-2).reduce((s, p) => s + p.orders, 0)) / 2;
+  const prior = pts.slice(-9, -2).map((p) => p.orders).sort((a, b) => a - b);
+  if (prior.length === 0) return null;
+  const baseline = prior[Math.floor(prior.length / 2)]; // медиана
+  if (baseline < 2) return null; // слишком мало, чтобы судить
+  const drop = Math.round((1 - recent / baseline) * 100);
+  if (drop >= 40) return { drop, baseline: Math.round(baseline), recent: Math.round(recent) };
+  return null;
+}
