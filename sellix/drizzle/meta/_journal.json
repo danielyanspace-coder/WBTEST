@@ -43,6 +43,13 @@
       "when": 1782381575527,
       "tag": "0005_hesitant_post",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782409849073,
+      "tag": "0006_aberrant_spectrum",
+      "breakpoints": true
     }
   ]
 }

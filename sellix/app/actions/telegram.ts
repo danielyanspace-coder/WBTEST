@@ -34,6 +34,7 @@ export async function saveNotifySettingsAction(input: {
   budget: boolean;
   priceChanges: boolean;
   weeklyDigest: boolean;
+  acceptance: boolean;
 }) {
   const user = await getCurrentUser();
   if (!user) return { error: "Войдите снова" };

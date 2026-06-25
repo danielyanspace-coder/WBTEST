@@ -18,6 +18,7 @@ export default async function SettingsPage() {
     budget: setRow?.budget ?? true,
     priceChanges: setRow?.priceChanges ?? true,
     weeklyDigest: setRow?.weeklyDigest ?? true,
+    acceptance: setRow?.acceptance ?? true,
   };
 
   return (

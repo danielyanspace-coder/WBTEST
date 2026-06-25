@@ -9,10 +9,12 @@ type Flags = {
   budget: boolean;
   priceChanges: boolean;
   weeklyDigest: boolean;
+  acceptance: boolean;
 };
 
 const LABELS: [keyof Flags, string][] = [
   ["outOfStock", "Заканчивается товар"],
+  ["acceptance", "Открылась приёмка на складе"],
   ["budget", "Реклама жжёт бюджет (kill-switch)"],
   ["reviews", "Негативные отзывы без ответа"],
   ["priceChanges", "Изменения цен репрайсером"],

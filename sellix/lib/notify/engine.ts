@@ -24,7 +24,7 @@ import { anomalyDrop, type DailyPoint } from "@/lib/ml/forecast";
 import { getStoreHealth } from "@/lib/health/score";
 
 type NotifyInput = {
-  type: "stock" | "reviews" | "budget" | "price" | "trial" | "digest" | "sales";
+  type: "stock" | "reviews" | "budget" | "price" | "trial" | "digest" | "sales" | "acceptance";
   title: string;
   body?: string;
   severity?: "info" | "warning" | "critical";
@@ -47,8 +47,9 @@ const SETTING_FLAG: Record<string, keyof typeof flagDefaults> = {
   price: "priceChanges",
   digest: "weeklyDigest",
   trial: "weeklyDigest",
+  acceptance: "acceptance",
 };
-const flagDefaults = { outOfStock: true, reviews: true, budget: true, priceChanges: true, weeklyDigest: true };
+const flagDefaults = { outOfStock: true, reviews: true, budget: true, priceChanges: true, weeklyDigest: true, acceptance: true };
 
 /** Создать уведомление (с дедупом за сутки) и отправить в Telegram, если можно. */
 export async function notify(userId: string, n: NotifyInput) {

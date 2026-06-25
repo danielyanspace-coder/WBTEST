@@ -1,6 +1,8 @@
 import { PageShell } from "@/components/dashboard/PageShell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getPriceRecs } from "@/lib/data/dashboard";
+import { AcceptanceMonitor } from "@/components/dashboard/AcceptanceMonitor";
+import { getWarehouseWatchesStatus } from "@/app/actions/warehouses";
 
 const DEMO = [
   { name: "Платье летнее", qty: 6 },
@@ -13,6 +15,7 @@ export default async function SuppliesPage() {
   const recs = user ? await getPriceRecs(user.id) : [];
   const low = recs.filter((r) => r.qty > 0 && r.qty < 10).map((r) => ({ name: r.name, qty: r.qty }));
   const rows = low.length ? low : DEMO;
+  const watches = user ? await getWarehouseWatchesStatus(user.id) : [];
 
   return (
     <PageShell title="Поставки и остатки">
@@ -42,6 +45,8 @@ export default async function SuppliesPage() {
         Список строится по вашим остаткам из WB. Подключите магазин, чтобы видеть
         реальные данные и прогноз, на сколько дней хватит запаса.
       </p>
+
+      <AcceptanceMonitor watches={watches} />
     </PageShell>
   );
 }

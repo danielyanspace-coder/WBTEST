@@ -13,6 +13,7 @@ import {
   Settings,
   PlugZap,
   Sparkles,
+  Wallet,
 } from "@/components/ui/icons";
 
 export type NavItem = {
@@ -30,6 +31,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { href: "/dashboard/connect", label: "Подключить WB", icon: PlugZap, group: "main", badge: "старт" },
 
   { href: "/dashboard/analytics", label: "Аналитика", icon: LineChart, group: "tools" },
+  { href: "/dashboard/finance", label: "Финансы", icon: Wallet, group: "tools" },
   { href: "/dashboard/reviews", label: "Отзывы", icon: MessagesSquare, group: "tools" },
   { href: "/dashboard/pricing", label: "Умные цены", icon: Tag, group: "tools" },
   { href: "/dashboard/supplies", label: "Поставки", icon: Boxes, group: "tools" },

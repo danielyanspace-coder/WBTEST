@@ -11,6 +11,7 @@ export const WB_HOSTS = {
   analytics: "https://seller-analytics-api.wildberries.ru",
   feedbacks: "https://feedbacks-api.wildberries.ru",
   advert: "https://advert-api.wildberries.ru",
+  supplies: "https://supplies-api.wildberries.ru",
   common: "https://common-api.wildberries.ru",
 };
 
@@ -177,6 +178,20 @@ export class WBClient {
       method: "POST",
       body: JSON.stringify({ advertId, type, cpm, ...(param != null ? { param } : {}) }),
     });
+  }
+
+  // ─── Приёмка складов (Supplies API) ─────────────────────────
+  /** Список складов WB. */
+  async getWarehouses(): Promise<any[]> {
+    const data = await wbFetch<any>("supplies", "/api/v1/warehouses", this.token);
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Коэффициенты приёмки. coefficient: -1 недоступно, 0 бесплатно, >0 платный множитель. */
+  async getAcceptanceCoefficients(warehouseIDs?: number[]): Promise<any[]> {
+    const q = warehouseIDs?.length ? `?warehouseIDs=${warehouseIDs.join(",")}` : "";
+    const data = await wbFetch<any>("supplies", `/api/v1/acceptance/coefficients${q}`, this.token);
+    return Array.isArray(data) ? data : [];
   }
 
   // ─── Контент (SEO карточки) ──────────────────────────────────

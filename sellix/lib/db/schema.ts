@@ -245,6 +245,7 @@ export const notificationSettings = pgTable("notification_settings", {
   budget: boolean("budget").notNull().default(true),
   priceChanges: boolean("price_changes").notNull().default(true),
   weeklyDigest: boolean("weekly_digest").notNull().default(true),
+  acceptance: boolean("acceptance").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -317,3 +318,32 @@ export const keywordPositions = pgTable(
 export type MarketSnapshot = typeof marketSnapshots.$inferSelect;
 export type WatchItem = typeof watchItems.$inferSelect;
 export type KeywordTrack = typeof keywordTracks.$inferSelect;
+
+// ─── Финансовый учёт: параметры юнит-экономики ──────────────────
+export const financeSettings = pgTable("finance_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  commissionPct: integer("commission_pct").notNull().default(17), // комиссия WB, %
+  logisticsPerUnit: integer("logistics_per_unit").notNull().default(60), // логистика, ₽/шт
+  cogsPct: integer("cogs_pct").notNull().default(40), // доля себестоимости, %
+  taxPct: integer("tax_pct").notNull().default(7), // налог, %
+  fixedMonthly: integer("fixed_monthly").notNull().default(0), // постоянные расходы, ₽/мес
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ─── Мониторинг приёмки складов WB ──────────────────────────────
+export const warehouseWatches = pgTable(
+  "warehouse_watches",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    warehouseId: integer("warehouse_id").notNull(),
+    warehouseName: text("warehouse_name"),
+    maxCoefficient: integer("max_coefficient").notNull().default(0), // макс. приемлемый коэф. (0 = только бесплатно)
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ uniq: unique("whwatch_uniq").on(t.userId, t.warehouseId) })
+);
+
+export type FinanceSettings = typeof financeSettings.$inferSelect;
+export type WarehouseWatch = typeof warehouseWatches.$inferSelect;

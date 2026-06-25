@@ -9,6 +9,7 @@ import {
   Bell,
   Sparkles,
   BookOpen,
+  Wallet,
 } from "@/components/ui/icons";
 
 /** Список фич продукта — используется на лендинге и в меню кабинета. */
@@ -40,6 +41,13 @@ export const FEATURES: Feature[] = [
     title: "Аналитика магазина",
     short: "Продажи, выручка, прибыль и воронка — понятными словами.",
     icon: LineChart,
+    status: "ready-ui",
+  },
+  {
+    slug: "finance",
+    title: "Финансы и прибыль",
+    short: "ОПиУ, юнит-экономика с налогами и маржа по каждому товару.",
+    icon: Wallet,
     status: "ready-ui",
   },
   {
