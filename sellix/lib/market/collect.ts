@@ -6,8 +6,9 @@
  */
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { marketSnapshots, products, stocks, watchItems } from "@/lib/db/schema";
+import { marketSnapshots, products, stocks, watchItems, keywordTracks, keywordPositions } from "@/lib/db/schema";
 import { fetchItemSnapshot } from "./public";
+import { findPosition } from "./position";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -66,6 +67,27 @@ export async function snapshotWatchlist(limit = 300) {
       .onConflictDoNothing();
     ok++;
     await new Promise((r) => setTimeout(r, 120)); // бережём публичный API
+  }
+  return ok;
+}
+
+/** Ежедневный замер позиций по всем отслеживаемым запросам. */
+export async function snapshotKeywords(limit = 300) {
+  const tracks = await db
+    .select({ nmId: keywordTracks.nmId, query: keywordTracks.query })
+    .from(keywordTracks)
+    .groupBy(keywordTracks.nmId, keywordTracks.query)
+    .limit(limit);
+  const d = new Date().toISOString().slice(0, 10);
+  let ok = 0;
+  for (const t of tracks) {
+    const pos = await findPosition(t.query, t.nmId);
+    await db
+      .insert(keywordPositions)
+      .values({ nmId: t.nmId, query: t.query, date: d, position: pos })
+      .onConflictDoNothing();
+    ok++;
+    await new Promise((r) => setTimeout(r, 150));
   }
   return ok;
 }

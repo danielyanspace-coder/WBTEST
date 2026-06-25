@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { SeoStudio } from "@/components/dashboard/SeoStudio";
+import { PositionTracker } from "@/components/dashboard/PositionTracker";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getStoreForUser } from "@/lib/wb/store";
+import { getKeywordTracks } from "@/app/actions/keywords";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 
@@ -26,6 +28,8 @@ export default async function SeoPage() {
     }
   }
 
+  const tracks = user ? await getKeywordTracks(user.id) : [];
+
   return (
     <PageShell title="SEO карточек">
       <div className="bento-lime mb-4 p-6">
@@ -35,6 +39,7 @@ export default async function SeoPage() {
         </div>
       </div>
       <SeoStudio products={list} />
+      <PositionTracker tracks={tracks} />
     </PageShell>
   );
 }

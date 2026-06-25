@@ -56,6 +56,7 @@ export async function getWatchlist(userId: string) {
       .limit(40);
     const est = estimateSales(snaps.map((s) => ({ date: s.date, stock: s.stock, price: s.price })));
     const latest = snaps[0];
+    const asc = [...snaps].reverse();
     out.push({
       id: it.id,
       nmId: it.nmId,
@@ -65,6 +66,8 @@ export async function getWatchlist(userId: string) {
       days: est?.days ?? 0,
       perDay: est?.perDay ?? null,
       estSold: est?.estSold ?? null,
+      stockSeries: asc.map((s) => s.stock ?? 0),
+      salesSeries: est?.series.map((x) => x.sold) ?? [],
     });
   }
   return out;

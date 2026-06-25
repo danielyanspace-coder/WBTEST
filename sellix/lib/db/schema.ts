@@ -288,5 +288,32 @@ export type Feedback = typeof feedbacks.$inferSelect;
 export type HandbookDoc = typeof handbookDocs.$inferSelect;
 export type AdCampaign = typeof adCampaigns.$inferSelect;
 export type AdSettings = typeof adSettings.$inferSelect;
+// ─── Отслеживание позиций по ключевым запросам (бесплатно из поиска WB) ──
+export const keywordTracks = pgTable(
+  "keyword_tracks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    nmId: integer("nm_id").notNull(),
+    query: text("query").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ uniq: unique("kwtrack_uniq").on(t.userId, t.nmId, t.query) })
+);
+
+export const keywordPositions = pgTable(
+  "keyword_positions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    nmId: integer("nm_id").notNull(),
+    query: text("query").notNull(),
+    date: text("date").notNull(), // YYYY-MM-DD
+    position: integer("position"), // null = не найдено в топе
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ uniq: unique("kwpos_uniq").on(t.nmId, t.query, t.date) })
+);
+
 export type MarketSnapshot = typeof marketSnapshots.$inferSelect;
 export type WatchItem = typeof watchItems.$inferSelect;
+export type KeywordTrack = typeof keywordTracks.$inferSelect;

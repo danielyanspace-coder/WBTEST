@@ -7,7 +7,7 @@ import { WBClient } from "@/lib/wb/client";
 import { syncAll } from "@/lib/wb/sync";
 import { recommendBid, DEFAULT_BID_SETTINGS } from "@/lib/ads/engine";
 import { runAlertsForAll } from "@/lib/notify/engine";
-import { snapshotWatchlist } from "@/lib/market/collect";
+import { snapshotWatchlist, snapshotKeywords } from "@/lib/market/collect";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const result = { stores: 0, synced: 0, bidsApplied: 0, alerts: 0, watchSnapshots: 0 };
+  const result = { stores: 0, synced: 0, bidsApplied: 0, alerts: 0, watchSnapshots: 0, keywordSnapshots: 0 };
   const connected = await db.select().from(stores).where(eq(stores.status, "CONNECTED"));
   result.stores = connected.length;
 
@@ -61,6 +61,10 @@ export async function GET(req: NextRequest) {
 
   try {
     result.watchSnapshots = await snapshotWatchlist();
+  } catch {}
+
+  try {
+    result.keywordSnapshots = await snapshotKeywords();
   } catch {}
 
   try {

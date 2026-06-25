@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { removeWatchAction } from "@/app/actions/watch";
+import { Sparkline } from "@/components/ui/Sparkline";
 
 type Item = {
   id: string;
@@ -12,6 +13,8 @@ type Item = {
   days: number;
   perDay: number | null;
   estSold: number | null;
+  stockSeries: number[];
+  salesSeries: number[];
 };
 
 export function Watchlist({ items }: { items: Item[] }) {
@@ -26,16 +29,17 @@ export function Watchlist({ items }: { items: Item[] }) {
         считаем продажи по разнице остатков. История копится — точность растёт.
       </p>
       <div className="bento p-0 overflow-x-auto">
-        <div className="grid grid-cols-12 border-b border-line px-5 py-3 text-xs uppercase text-muted min-w-[640px]">
-          <div className="col-span-5">Товар</div>
+        <div className="grid grid-cols-12 border-b border-line px-5 py-3 text-xs uppercase text-muted min-w-[720px]">
+          <div className="col-span-4">Товар</div>
           <div className="col-span-2">Цена</div>
           <div className="col-span-2">Остаток</div>
           <div className="col-span-2">Продажи/день</div>
+          <div className="col-span-1">Динамика</div>
           <div className="col-span-1"></div>
         </div>
         {items.map((it) => (
-          <div key={it.id} className="grid grid-cols-12 items-center border-b border-line px-5 py-4 text-sm last:border-0 min-w-[640px]">
-            <div className="col-span-5 truncate font-medium">{it.title}</div>
+          <div key={it.id} className="grid grid-cols-12 items-center border-b border-line px-5 py-4 text-sm last:border-0 min-w-[720px]">
+            <div className="col-span-4 truncate font-medium">{it.title}</div>
             <div className="col-span-2">{it.price != null ? it.price.toLocaleString("ru-RU") + " ₽" : "—"}</div>
             <div className="col-span-2">{it.stock ?? "—"}</div>
             <div className="col-span-2">
@@ -44,6 +48,9 @@ export function Watchlist({ items }: { items: Item[] }) {
               ) : (
                 <span className="text-xs text-muted">копим данные…</span>
               )}
+            </div>
+            <div className="col-span-1">
+              <Sparkline data={it.salesSeries.length >= 2 ? it.salesSeries : it.stockSeries} className="h-7 w-16" />
             </div>
             <div className="col-span-1 text-right">
               <button
