@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { stores, products, stocks, salesDaily, feedbacks, adCampaigns } from "@/lib/db/schema";
 import { WBClient } from "./client";
+import { appendOwnSnapshots } from "@/lib/market/collect";
 
 function dateNDaysAgo(n: number) {
   return new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
@@ -180,6 +181,11 @@ export async function syncAll(storeId: string, client: WBClient) {
       result[name] = `error: ${e?.message ?? "unknown"}`;
     }
   }
+  // Снимок своей истории рынка (накопление данных без покупок)
+  try {
+    await appendOwnSnapshots(storeId);
+  } catch {}
+
   await db.update(stores).set({ lastSyncAt: new Date() }).where(eq(stores.id, storeId));
   return result;
 }

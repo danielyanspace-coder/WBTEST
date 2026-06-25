@@ -14,6 +14,7 @@ import {
   boolean,
   jsonb,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // ─── Перечисления ───────────────────────────────────────────────
@@ -247,6 +248,38 @@ export const notificationSettings = pgTable("notification_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// ─── Своя история рынка (накопление данных без покупок) ──────────
+// Снимок по товару за день: source='own' — реальные данные нашего продавца,
+// source='public' — цена/остаток из бесплатного публичного API WB.
+export const marketSnapshots = pgTable(
+  "market_snapshots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    nmId: integer("nm_id").notNull(),
+    date: text("date").notNull(), // YYYY-MM-DD
+    price: integer("price"),
+    stock: integer("stock"),
+    rating: real("rating"),
+    feedbacks: integer("feedbacks"),
+    source: text("source").notNull().default("public"), // own | public
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ uniq: unique("market_snap_uniq").on(t.nmId, t.date, t.source) })
+);
+
+// Список отслеживаемых товаров/конкурентов (что снимать ежедневно из публичного API)
+export const watchItems = pgTable(
+  "watch_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    nmId: integer("nm_id").notNull(),
+    title: text("title"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ uniq: unique("watch_uniq").on(t.userId, t.nmId) })
+);
+
 export type User = typeof users.$inferSelect;
 export type Store = typeof stores.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
@@ -255,3 +288,5 @@ export type Feedback = typeof feedbacks.$inferSelect;
 export type HandbookDoc = typeof handbookDocs.$inferSelect;
 export type AdCampaign = typeof adCampaigns.$inferSelect;
 export type AdSettings = typeof adSettings.$inferSelect;
+export type MarketSnapshot = typeof marketSnapshots.$inferSelect;
+export type WatchItem = typeof watchItems.$inferSelect;

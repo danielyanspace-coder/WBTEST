@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Search, Star } from "@/components/ui/icons";
 import type { NicheReport } from "@/lib/niche/wbPublic";
+import { addWatchAction } from "@/app/actions/watch";
 
 const RUB = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
@@ -11,6 +12,13 @@ export function NicheExplorer() {
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<NicheReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const [tracked, setTracked] = useState<number[]>([]);
+
+  function track(nmId: number, name: string) {
+    setTracked((t) => [...t, nmId]);
+    start(async () => { await addWatchAction(nmId, name); });
+  }
 
   async function run() {
     if (!query.trim() || loading) return;
@@ -102,8 +110,15 @@ export function NicheExplorer() {
                       <span className="flex items-center gap-1 text-muted">
                         <Star className="h-3 w-3 text-lime" /> {p.rating.toFixed(1)}
                       </span>
-                      <span className="text-muted">{p.feedbacks} отз.</span>
+                      <span className="hidden text-muted sm:inline">{p.feedbacks} отз.</span>
                       <span className="font-semibold">{RUB(p.price)}</span>
+                      <button
+                        onClick={() => track(p.id, p.name)}
+                        disabled={pending || tracked.includes(p.id)}
+                        className="rounded-full border border-line px-2 py-0.5 text-xs text-muted hover:border-lime/40 hover:text-white disabled:opacity-50"
+                      >
+                        {tracked.includes(p.id) ? "Отслеживается" : "Отслеживать"}
+                      </button>
                     </div>
                   </div>
                 ))}
